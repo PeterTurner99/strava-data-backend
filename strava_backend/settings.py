@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -25,8 +26,9 @@ SECRET_KEY = 'django-insecure-c@oy32f8&$u484abxuo43$)e2oe=1&dyb+p@6l9qltxy)x96f9
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = ["localhost",
+"127.0.0.1",]
+CSRF_TRUSTED_ORIGINS  = ['http://localhost:5173']
 
 # Application definition
 
@@ -37,9 +39,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'stravaauth.apps.AuthConfig',
+    'strava.apps.StravaConfig',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -113,6 +119,9 @@ USE_L10N = True
 
 USE_TZ = True
 
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = ['http://localhost:5173']
+CORS_TRUSTED_ORIGINS = ['http://localhost:5173']
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
@@ -123,3 +132,22 @@ STATIC_URL = '/static/'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+AUTH_USER_MODEL  = "stravaauth.StravaAthlete"
+
+STRAVA_BASE_URL = 'https://www.strava.com/api/v3/'
+CLIENT_ID =  os.environ.get('Client_ID')
+if not CLIENT_ID:
+    raise ValueError(
+        'Client_ID environment variable is missing.'
+        'Have you put it in a file at .env ?'
+    )
+CLIENT_SECRET =  os.environ.get('Client_Secret')
+if not CLIENT_SECRET:
+    raise ValueError(
+        'Client_Secret environment variable is missing.'
+        'Have you put it in a file at .env ?'
+    )
+    
+    
+SESSION_COOKIE_HTTPONLY = True
+CSRF_COOKIE_HTTPONLY = False
