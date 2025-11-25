@@ -8,6 +8,11 @@ User = get_user_model()
 
 NON_MOVING_ACTIVITIES = [
     (Crossfit := "CF", "Crossfit"),
+    (HighIntensityIntervalTraining := "HIT", "High Intensity Interval Training"),
+    (WeightTraining := "WT", "Weight Training"),
+    (Workout := "WO", "Workout"),
+    (Yoga := "Y", "Yoga"),
+    (Pilates := "P", "Pilates"),
 ]
 STATIONARY_MOVING_ACTIVITIES = [
     (Elliptical := "E", "Elliptical"),
@@ -15,9 +20,7 @@ STATIONARY_MOVING_ACTIVITIES = [
     (StairStepper := "STS", "Stair Stepper"),
     (VirtualRide := "VR", "Virtual Ride"),
     (VirtualRun := "VRU", "Virtual Run"),
-    (WeightTraining := "WT", "Weight Training"),
-    (Workout := "WO", "Workout"),
-    (Yoga := "Y", "Yoga"),
+    (VirtualRow := "VRO", "VirtualRow"),
 ]
 MOVING_ACTIVITIES = [
     (AlpineSki := "AS", "Alpine Ski"),
@@ -35,7 +38,7 @@ MOVING_ACTIVITIES = [
     (Ride := "R", "Ride"),
     (RollerSki := "RS", "Roller Ski"),
     (Rowing := "ROW", "Rowing"),
-    (Run := "R", "Running"),
+    (Run := "RU", "Running"),
     (Sail := "S", "Sailing"),
     (Skateboard := "SB", "Skateboard"),
     (Snowboard := "SNB", "Snowboard"),
@@ -56,7 +59,6 @@ So both are not used
 
 
 """
-
 
 
 class BaseActivity(models.Model):
@@ -87,9 +89,10 @@ class BaseActivity(models.Model):
     gear_id = models.CharField(max_length=125, null=True, blank=True)
     from_accepted_tag = models.BooleanField(default=False)
 
+
 class NonMovingActivity(BaseActivity):
     sport_type = models.CharField(choices=NON_MOVING_ACTIVITIES, max_length=10)
-    
+
 
 class StationaryMovingActivity(BaseActivity):
     distance = models.FloatField()
@@ -122,9 +125,9 @@ class MovingActivity(BaseActivity):
         max_length=10,
     )
     total_elevation_gain = models.FloatField()
-    start_langitude = models.FloatField(null=True, blank=True)
+    start_latitude  = models.FloatField(null=True, blank=True)
     start_longitude = models.FloatField(null=True, blank=True)
-    end_langitude = models.FloatField(null=True, blank=True)
+    end_latitude  = models.FloatField(null=True, blank=True)
     end_longitude = models.FloatField(null=True, blank=True)
     distance = models.FloatField()
     average_speed = models.FloatField()
@@ -143,8 +146,9 @@ class MovingActivity(BaseActivity):
     has_kudoed = models.BooleanField(default=False)
     suffer_score = models.FloatField(null=True, blank=True)
 
+
 class ActivityMap(models.Model):
-    moving_activity = models.ForeignKey(MovingActivity, on_delete=models.CASCADE)
+    moving_activity = models.OneToOneField(MovingActivity, on_delete=models.CASCADE)
     strava_id = models.CharField(max_length=125)
     polyline = models.TextField()
     summary_polyline = models.TextField()
