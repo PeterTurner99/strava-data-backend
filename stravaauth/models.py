@@ -12,13 +12,13 @@ class StravaAthlete(AbstractUser):
         ("F", "Feet"),
         ("M", "Meters"),
     ]
-    athelete_id = models.IntegerField()
-    measurement_preference = models.CharField(choices=MEASUREMENT_CHOICES, max_length=5)
+    athelete_id = models.IntegerField(null=True, blank=True)
+    measurement_preference = models.CharField(choices=MEASUREMENT_CHOICES, max_length=5, null=True, blank=True)
     ftp = models.IntegerField(null= True, blank=True)
-    weight = models.FloatField()
-    access_token = models.CharField(max_length=120)
-    refresh_token = models.CharField(max_length=120)
-    expires_at_int = models.IntegerField()
+    weight = models.FloatField(null=True, blank=True)
+    access_token = models.CharField(max_length=120, null=True, blank=True)
+    refresh_token = models.CharField(max_length=120, null=True, blank=True)
+    expires_at_int = models.IntegerField(null=True, blank=True)
     activities_last_checked = models.DateTimeField(blank=True, null=True)
     @property
     def expires_at(self: Self) -> datetime:

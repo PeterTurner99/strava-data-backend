@@ -28,6 +28,7 @@ MOVING_ACTIVITIES = [
     (Canoeing := "C", "Canoeing"),
     (EBikeRide := "EBR", "E-Bike Ride"),
     (Golf := "G", "Golf"),
+    (GravelRide := 'GR', 'Gravel Ride'),
     (Handcycle := "HC", "Handcycle"),
     (Hike := "H", "Hike"),
     (IceSkate := "IS", "Ice Skate"),
@@ -92,7 +93,8 @@ class BaseActivity(models.Model):
 
 class NonMovingActivity(BaseActivity):
     sport_type = models.CharField(choices=NON_MOVING_ACTIVITIES, max_length=10)
-
+    total_photo_count = models.IntegerField(default=0)
+    has_kudoed = models.BooleanField(default=False)
 
 class StationaryMovingActivity(BaseActivity):
     distance = models.FloatField()

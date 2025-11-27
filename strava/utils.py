@@ -2,15 +2,15 @@ from enum import Enum
 from typing import Dict, Optional
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
-
+import logging
 import requests
 from strava.types import RefreshStravaAuthDict, InitialStravaAuthDict
 
-
+logger = logging.getLogger(__name__)
 class CONVERSION_NON_MOVING_ACTIVITIES(Enum):
     CF = "Crossfit"
-    HIT = "High Intensity Interval Training"
-    WT = "Weight Training"
+    HIT = "HighIntensityIntervalTraining"
+    WT = "WeightTraining"
     WO = "Workout"
     Y = "Yoga"
     P = "Pilates"
@@ -18,36 +18,37 @@ class CONVERSION_NON_MOVING_ACTIVITIES(Enum):
 
 class CONVERSION_STATIONARY_MOVING_ACTIVITIES(Enum):
     E = "Elliptical"
-    RC = "Rock Climbing"
-    STS = "Stair Stepper"
-    VR = "Virtual Ride"
-    VRU = "Virtual Run"
+    RC = "RockClimbing"
+    STS = "StairStepper"
+    VR = "VirtualRide"
+    VRU = "VirtualRun"
     VRO = "VirtualRow"
 
 
 class CONVERSION_MOVING_ACTIVITIES(Enum):
-    AS = "Alpine Ski"
-    BS = "Backcountry Ski"
+    AS = "AlpineSki"
+    BS = "BackcountrySki"
     C = "Canoeing"
-    EBR = "E-Bike Ride"
+    EBR = "E-BikeRide"
     G = "Golf"
+    GR = 'GravelRide'
     HC = "Handcycle"
     H = "Hike"
     IS = "Ice Skate"
     ILS = "Inline Skate"
     K = "Kayaking"
     KS = "Kitesurf"
-    NS = "Nordic Ski"
+    NS = "NordicSki"
     R = "Ride"
     RS = "Roller Ski"
     ROW = "Rowing"
-    RU = "Running"
+    RU = "Run"
     S = "Sailing"
     SB = "Skateboard"
     SNB = "Snowboard"
     SS = "Snowshoe"
     SO = "Soccer"
-    SUP = "Stand Up Paddling"
+    SUP = "StandUpPaddling"
     SU = "Surfing"
     SW = "Swim"
     V = "Velomobile"
@@ -118,7 +119,7 @@ class STRAVA_MODEL_DATE_CONVERSION(Enum):
     @classmethod
     def has_key(cls, name):
         return name in cls.__members__
-
+    @classmethod
     def has_value(cls, value):
         return value in set(item.value for item in cls)
 
@@ -163,7 +164,7 @@ def send_strava_post(
     URL = f"{BASE_URL}/{url}"
     if headers is None:
         headers = {}
-    headers["Authorization"] = f" Bearer {access_token}"
+    headers["Authorization"] = f"Bearer {access_token}"
     post_request = requests.post(URL, headers=headers, data=data)
     if post_request.status_code != 200:
         raise PermissionDenied
@@ -180,7 +181,7 @@ def send_strava_get(
     URL = f"{BASE_URL}/{url}"
     if headers is None:
         headers = {}
-    headers["Authorization"] = f" Bearer {access_token}"
+    headers["Authorization"] = f"Bearer {access_token}"
     post_request = requests.get(URL, headers=headers)
     if post_request.status_code != 200:
         raise PermissionDenied
@@ -190,12 +191,13 @@ def send_strava_get(
 
 def api_response_generator(user, url):
     access_token = user.get_access_token()
-    data = send_strava_get(access_token, url, headers={"per_page": 30})
+    data = send_strava_get(access_token, f"{url}?per_page=50")
     page_counter = 2
     while data:
         for data_section in data:
             yield data_section
         data = send_strava_get(
-            access_token, url, headers={"per_page": 30, "page": page_counter}
+            access_token, f"{url}?per_page=50&page={page_counter}"
         )
         page_counter = page_counter + 1
+        logger.info(f"Page count {page_counter} for url {url}")
