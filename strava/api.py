@@ -1,5 +1,5 @@
 from typing import List
-from ninja import Router
+from ninja import Query, Router
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.contrib.auth import get_user_model
 from ninja.security import django_auth
@@ -12,7 +12,7 @@ from strava.models import (
     NonMovingActivity,
     StationaryMovingActivity,
 )
-from strava.schema import BaseActivitySchema, MovingActivitySchema
+from strava.schema import BaseActivitySchema, MovingActivitySchema, NoneBaseActivityFilterSchema
 from strava.utils import (
     CONVERSION_MOVING_ACTIVITIES,
     CONVERSION_NON_MOVING_ACTIVITIES,
@@ -22,6 +22,7 @@ from strava.utils import (
     STRAVA_MODEL_CONVERSION,
 )
 from ninja.errors import HttpError
+
 router = Router()
 User = get_user_model()
 
@@ -87,7 +88,7 @@ def pull_activities(request):
             fields = [field.name for field in model._meta.get_fields()]
             if STRAVA_MODEL_CONVERSION.has_value(key):
                 field_name = STRAVA_MODEL_CONVERSION(key).name
-                
+
                 if field_name not in fields:
                     continue
                 obj_data[field_name] = value
@@ -96,7 +97,7 @@ def pull_activities(request):
                     datetime.fromisoformat(value)
                 )
             elif key == "start_latlng":
-                field_name = 'end_longitude'
+                field_name = "end_longitude"
                 if value == []:
                     continue
                 if field_name not in fields:
@@ -116,7 +117,7 @@ def pull_activities(request):
 
         if sport_type in MOVING_TYPES:
             map_data = data.get("map")
-            map_obj = ActivityMap.objects.create(
+            ActivityMap.objects.create(
                 moving_activity=activity,
                 strava_id=map_data.get("id"),
                 polyline=map_data.get("polyline", ""),
@@ -128,39 +129,49 @@ def pull_activities(request):
     return 200, {"message": "success"}
 
 
-
 @ensure_csrf_cookie
-@router.get('base_activities/', auth=django_auth, response=List[BaseActivitySchema])
-def get_base_activities(request, limit: int = 30, offset: int = 0):
-    base_activities = BaseActivity.objects.filter(user=request.user).order_by('-start_date')[(offset*limit): (offset*limit) + limit]
+@router.get("base_activities/", auth=django_auth, response=List[BaseActivitySchema])
+def get_base_activities(
+    request, filters:  Query[NoneBaseActivityFilterSchema], limit: int = 30, page: int = 0
+):
+    base_activities = BaseActivity.objects.filter(user=request.user).order_by(
+        "-start_date"
+    )
+    base_activities = filters.filter(base_activities)[(page * limit) : (page * limit) + limit]
     return base_activities
 
+
 @ensure_csrf_cookie
-@router.get('base_activity/{id}/', auth=django_auth, response=BaseActivitySchema)
+@router.get("base_activity/{id}/", auth=django_auth, response=BaseActivitySchema)
 def get_base_activity(request, id: int):
-    base_activity = BaseActivity.objects.filter(id=id).order_by('-start_date')
+    base_activity = BaseActivity.objects.filter(id=id).order_by("-start_date")
     if not base_activity.exists():
-       raise HttpError (404, 'Item not found')
+        raise HttpError(404, "Item not found")
     base_activity = base_activity.first()
     if base_activity.user != request.user:
-        raise HttpError(403, 'Not correct user')
+        raise HttpError(403, "Not correct user")
     return base_activity
 
 
 @ensure_csrf_cookie
-@router.get('moving_activities/', auth=django_auth, response=List[MovingActivitySchema])
-def get_moving_activities(request, limit: int = 30, offset: int = 0):
-    moving_activities = MovingActivity.objects.filter(user=request.user).order_by('-start_date')[(offset*limit): (offset*limit) + limit]
+@router.get("moving_activities/", auth=django_auth, response=List[MovingActivitySchema])
+def get_moving_activities(
+    request, filters: Query[NoneBaseActivityFilterSchema], limit: int = 30, page: int = 0
+):
+    moving_activities = MovingActivity.objects.filter(user=request.user).order_by(
+        "start_date"
+    )
+    moving_activities = filters.filter(moving_activities)[(page * limit) : (page * limit) + limit]
     return moving_activities
 
+
 @ensure_csrf_cookie
-@router.get('moving_activity/{id}/', auth=django_auth, response=MovingActivitySchema)
+@router.get("moving_activity/{id}/", auth=django_auth, response=MovingActivitySchema)
 def get_moving_activity(request, id: int):
-    moving_activity = MovingActivity.objects.filter(id=id).order_by('-start_date')
+    moving_activity = MovingActivity.objects.filter(id=id).order_by("-start_date")
     if not moving_activity.exists():
-       raise HttpError (404, 'Item not found')
+        raise HttpError(404, "Item not found")
     moving_activity = moving_activity.first()
     if moving_activity.user != request.user:
-        raise HttpError(403, 'Not correct user')
+        raise HttpError(403, "Not correct user")
     return moving_activity
-

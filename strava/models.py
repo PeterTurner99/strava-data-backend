@@ -1,5 +1,5 @@
 from django.db import models
-
+from typing import Self
 # Create your models here.
 from django.contrib.auth import get_user_model
 
@@ -89,7 +89,9 @@ class BaseActivity(models.Model):
     flagged = models.BooleanField(default=False)
     gear_id = models.CharField(max_length=125, null=True, blank=True)
     from_accepted_tag = models.BooleanField(default=False)
-
+    @property
+    def start_date_str(self: Self) -> str:
+        return f"{self.start_date.timestamp()}"
 
 class NonMovingActivity(BaseActivity):
     sport_type = models.CharField(choices=NON_MOVING_ACTIVITIES, max_length=10)

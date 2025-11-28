@@ -1,4 +1,5 @@
-from ninja import ModelSchema
+from typing import Optional
+from ninja import ModelSchema, FilterSchema
 from .models import (
     BaseActivity,
     MovingActivity,
@@ -6,8 +7,27 @@ from .models import (
     StationaryMovingActivity,
     ActivityMap,
 )
-from ninja.orm import create_schema
+from datetime import datetime
+from django.db.models import Q
 
+class NoneBaseActivityFilterSchema(FilterSchema):
+    before: Optional[str] = None
+    after: Optional[str] = None
+    def filter_before(self, value:str) -> Q:
+        if not value:
+            return Q()
+        date_time = datetime.fromisoformat(value)
+        return Q(start_date__lte = date_time)
+
+    def filter_after(self, value:str) -> Q:
+        if not value:
+            return Q()
+        date_time = datetime.fromisoformat(value)
+        return Q(start_date__gte = date_time) 
+    
+class NoneBaseActivityFilterSchema(NoneBaseActivityFilterSchema):
+    sport_type: Optional[str] = None
+    
 
 class BaseActivitySchema(ModelSchema):
     class Meta:
@@ -81,15 +101,13 @@ class StationaryMovingActivitySchema(ModelSchema):
     class Meta:
         model = StationaryMovingActivity
 
-        exclude = (
-            [
-                "user",
-                "timezone",
-                "utc_offset",
-                "trainer",
-                "commute",
-                "manual",
-                "flagged",
-                "from_accepted_tag",
-            ],
-        )
+        exclude = [
+            "user",
+            "timezone",
+            "utc_offset",
+            "trainer",
+            "commute",
+            "manual",
+            "flagged",
+            "from_accepted_tag",
+        ]
